@@ -1,26 +1,28 @@
---Q1 Fix or Improve
+-- Q1 Fix or Improve
+-- Without knowing exactly how these functions operate, the only issue was the releaseStorage call not sending a player
 local function releaseStorage(player)
 player:setStorageValue(1000, -1)
 end
 
 function onLogout(player)
 if player:getStorageValue(1000) == 1 then
-addEvent(releaseStorage, 1000, player)
+addEvent(releaseStorage(player), 1000, player)
 end
 return true
 end
 
-
---Q2 Fix or Improve
+-- Q2 Fix or Improve
+-- Unfamiliar with lua and not entirely certain how some of these functions work
 function printSmallGuildNames(memberCount)
 -- this method is supposed to print names of all guilds that have less than memberCount max members
 local selectGuildQuery = "SELECT name FROM guilds WHERE max_members < %d;"
 local resultId = db.storeQuery(string.format(selectGuildQuery, memberCount))
-local guildName = result.getString("name")
+-- changed result to resultId as that is the only issue I could see
+local guildName = resultId.getString("name")
 print(guildName)
 end
 
---Q3 Fix or Improve
+-- Q3 Fix or Improve
 function do_sth_with_PlayerParty(playerId, membername)
 player = Player(playerId)
 local party = player:getParty()
@@ -28,29 +30,39 @@ local party = player:getParty()
 for k,v in pairs(party:getMembers()) do
 if v == Player(membername) then
 party:removeMember(Player(membername))
+-- end function when the party member is removed instead of continuing the loop
+return
 end
 end
 end
 
---Q4 Fix memory Leak
+// Q4 Fix memory Leak
 void Game::addItemToPlayer(const std::string& recipient, uint16_t itemId)
 {
-Player* player = g_game.getPlayerByName(recipient);
-if (!player) {
-player = new Player(nullptr);
-if (!IOLoginData::loadPlayerByName(player, recipient)) {
-return;
-}
+  Player* player = g_game.getPlayerByName(recipient);
+  // Need to delete player pointer after creating 
+  if (!player) {
+    player = new Player(nullptr);
+    if (!IOLoginData::loadPlayerByName(player, recipient)) {
+      delete player;
+      return;
+    }
+    delete player;
+  }
+
+  Item* item = Item::CreateItem(itemId);
+  if (!item) {
+    return;
+  }
+
+  g_game.internalAddItem(player->getInbox(), item, INDEX_WHEREEVER, FLAG_NOLIMIT);
+
+  if (player->isOffline()) {
+    IOLoginData::savePlayer(player);
+  }
 }
 
-Item* item = Item::CreateItem(itemId);
-if (!item) {
-return;
-}
 
-g_game.internalAddItem(player->getInbox(), item, INDEX_WHEREEVER, FLAG_NOLIMIT);
 
-if (player->isOffline()) {
-IOLoginData::savePlayer(player);
-}
-}
+
+
