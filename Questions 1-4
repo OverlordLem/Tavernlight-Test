@@ -40,7 +40,7 @@ end
 void Game::addItemToPlayer(const std::string& recipient, uint16_t itemId)
 {
   Player* player = g_game.getPlayerByName(recipient);
-  // Need to delete player pointer after creating 
+  // Need to delete player pointer after making it
   if (!player) {
     player = new Player(nullptr);
     if (!IOLoginData::loadPlayerByName(player, recipient)) {
